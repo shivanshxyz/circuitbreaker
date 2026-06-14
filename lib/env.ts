@@ -36,7 +36,15 @@ const serverSchema = z.object({
 
 export type ServerEnv = z.infer<typeof serverSchema>;
 
-export const readServerEnv = (): ServerEnv => serverSchema.parse(process.env);
+export const readServerEnv = (): ServerEnv =>
+  serverSchema.parse({
+    ...process.env,
+    MISSION_SIGNING_SECRET:
+      process.env.MISSION_SIGNING_SECRET ??
+      (process.env.NODE_ENV === "production"
+        ? undefined
+        : "circuitbreaker-local-development")
+  });
 
 export function requireEnv<K extends keyof ServerEnv>(
   env: ServerEnv,
