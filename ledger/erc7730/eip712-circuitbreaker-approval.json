@@ -1,0 +1,96 @@
+{
+  "$schema": "https://eips.ethereum.org/assets/eip-7730/erc7730-v1.schema.json",
+  "context": {
+    "$id": "CircuitBreaker Approval",
+    "eip712": {
+      "deployments": [
+        {
+          "chainId": 8453,
+          "address": "0x0000000000000000000000000000000000000000"
+        }
+      ],
+      "domain": {
+        "name": "CircuitBreaker",
+        "version": "1",
+        "chainId": 8453
+      },
+      "schemas": [
+        {
+          "primaryType": "FlowApproval",
+          "types": {
+            "EIP712Domain": [
+              { "name": "name", "type": "string" },
+              { "name": "version", "type": "string" },
+              { "name": "chainId", "type": "uint256" }
+            ],
+            "FlowApproval": [
+              { "name": "intent", "type": "string" },
+              { "name": "minimumReceived", "type": "string" },
+              { "name": "network", "type": "string" },
+              { "name": "flowHash", "type": "bytes32" },
+              { "name": "agentWallet", "type": "address" },
+              { "name": "transactionTo", "type": "address" },
+              { "name": "transactionValue", "type": "uint256" },
+              { "name": "calldataHash", "type": "bytes32" },
+              { "name": "riskDigest", "type": "bytes32" },
+              { "name": "expiresAt", "type": "uint256" },
+              { "name": "nonce", "type": "bytes32" }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "metadata": {
+    "owner": "CircuitBreaker"
+  },
+  "display": {
+    "formats": {
+      "FlowApproval": {
+        "intent": "Authorize guarded agent flow",
+        "fields": [
+          { "path": "intent", "label": "Action", "format": "raw" },
+          {
+            "path": "minimumReceived",
+            "label": "Receive at least",
+            "format": "raw"
+          },
+          { "path": "network", "label": "Network", "format": "raw" },
+          {
+            "path": "agentWallet",
+            "label": "Agent wallet",
+            "format": "addressOrName",
+            "params": { "type": "wallet" }
+          },
+          {
+            "path": "transactionTo",
+            "label": "Composer contract",
+            "format": "addressOrName",
+            "params": { "type": "contract" }
+          },
+          {
+            "path": "expiresAt",
+            "label": "Authorization expires",
+            "format": "date",
+            "params": { "encoding": "timestamp" }
+          }
+        ],
+        "required": [
+          "intent",
+          "minimumReceived",
+          "network",
+          "agentWallet",
+          "transactionTo",
+          "expiresAt"
+        ],
+        "excluded": [
+          "flowHash",
+          "transactionValue",
+          "calldataHash",
+          "riskDigest",
+          "nonce"
+        ]
+      }
+    }
+  }
+}
