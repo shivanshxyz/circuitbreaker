@@ -1,0 +1,51 @@
+{
+  "name": "circuitbreaker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.21.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "spike:composer": "node --env-file-if-exists=.env.local --import tsx scripts/spike-composer.ts",
+    "spike:dynamic": "node --env-file-if-exists=.env.local --import tsx scripts/spike-dynamic.ts",
+    "execute:composer": "node --env-file-if-exists=.env.local --import tsx scripts/execute-composer.ts"
+  },
+  "dependencies": {
+    "@dynamic-labs-wallet/core": "1.0.37",
+    "@dynamic-labs-wallet/node-evm": "1.0.37",
+    "@ledgerhq/ledger-wallet-provider": "1.3.0",
+    "@lifi/compose-spec": "0.2.0-staging.5",
+    "@lifi/composer-sdk": "0.2.0-staging.5",
+    "next": "16.2.9",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "viem": "2.52.2",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.60.0",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "16.2.9",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.0",
+    "vitest": "4.1.8"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  }
+}

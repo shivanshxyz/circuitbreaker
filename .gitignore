@@ -1,0 +1,15 @@
+.DS_Store
+.env
+.env.local
+.env.*.local
+.next
+coverage
+node_modules
+playwright-report
+test-results
+*.tsbuildinfo
+.superstack/
+AGENT_HANDOFF.md
+
+# Dynamic wallet state is sensitive and must never be committed.
+.circuitbreaker-wallet/
