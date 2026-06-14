@@ -22,9 +22,11 @@ const serverSchema = z.object({
   DYNAMIC_AUTH_TOKEN: z.string().min(1).optional(),
   DYNAMIC_ENVIRONMENT_ID: z.string().min(1).optional(),
   DYNAMIC_WALLET_PASSWORD: z.string().min(1).optional(),
+  DYNAMIC_WALLET_METADATA_JSON: optionalSecretSchema,
   DYNAMIC_WALLET_METADATA_PATH: z
     .string()
     .default(".circuitbreaker-wallet/wallet-metadata.json"),
+  MISSION_SIGNING_SECRET: optionalSecretSchema,
   LEDGER_APPROVER_ADDRESS: optionalAddressSchema,
   LLM_API_KEY: optionalSecretSchema,
   LLM_BASE_URL: z.string().url().default("https://api.openai.com/v1"),

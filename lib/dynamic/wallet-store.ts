@@ -9,8 +9,13 @@ export type StoredWalletMetadata = {
 };
 
 export const readStoredWalletMetadata = async (
-  metadataPath: string
+  metadataPath: string,
+  metadataJson?: string
 ): Promise<StoredWalletMetadata | null> => {
+  if (metadataJson) {
+    return JSON.parse(metadataJson) as StoredWalletMetadata;
+  }
+
   try {
     return JSON.parse(await readFile(metadataPath, "utf8")) as StoredWalletMetadata;
   } catch (error) {

@@ -3,9 +3,12 @@ import { maxUint256 } from "viem";
 import { z } from "zod";
 
 import { getMission } from "@/lib/mission/store";
+import { readMissionToken } from "@/lib/mission/token";
 import { evaluatePolicy } from "@/lib/policy/engine";
+import { readServerEnv, requireEnv } from "@/lib/env";
 
 const challengeSchema = z.object({
+  missionToken: z.string().min(1).optional(),
   scenario: z.enum([
     "CALLDATA_MUTATION",
     "EXPIRED_FLOW",
@@ -24,12 +27,22 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const mission = getMission(id);
+  const body = challengeSchema.parse(await request.json());
+  const env = readServerEnv();
+  const mission = body.missionToken
+    ? (() => {
+        requireEnv(env, ["MISSION_SIGNING_SECRET"]);
+        return readMissionToken(body.missionToken, env.MISSION_SIGNING_SECRET);
+      })()
+    : getMission(id);
   if (!mission) {
     return NextResponse.json({ error: "Mission not found." }, { status: 404 });
   }
+  if (mission.view.id !== id) {
+    return NextResponse.json({ error: "Mission token does not match." }, { status: 400 });
+  }
 
-  const { scenario } = challengeSchema.parse(await request.json());
+  const { scenario } = body;
   const input = { ...mission.policyInput };
 
   if (scenario === "CALLDATA_MUTATION") {

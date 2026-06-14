@@ -14,7 +14,8 @@ import { signBroadcastAndWait } from "@/lib/dynamic/executor";
 import { readStoredWalletMetadata } from "@/lib/dynamic/wallet-store";
 import { readServerEnv, requireEnv } from "@/lib/env";
 import { BASE_TOKENS } from "@/lib/evm/tokens";
-import { getMission, updateMission } from "@/lib/mission/store";
+import { getMission, saveMission } from "@/lib/mission/store";
+import { createMissionToken, readMissionToken } from "@/lib/mission/token";
 import { evaluatePolicy } from "@/lib/policy/engine";
 
 type DynamicWalletMetadata = Parameters<
@@ -35,13 +36,35 @@ export const runtime = "nodejs";
 const compact = (value: string) => `${value.slice(0, 8)}…${value.slice(-6)}`;
 
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  if (process.env.NEXT_PUBLIC_DEMO_READ_ONLY === "true") {
+    return NextResponse.json(
+      { error: "Execution is disabled on this deployment." },
+      { status: 403 }
+    );
+  }
+
   const { id } = await params;
-  const mission = getMission(id);
+  const body = (await request.json().catch(() => ({}))) as {
+    missionToken?: string;
+  };
+  const initialEnv = readServerEnv();
+  const mission = body.missionToken
+    ? (() => {
+        requireEnv(initialEnv, ["MISSION_SIGNING_SECRET"]);
+        return readMissionToken(
+          body.missionToken,
+          initialEnv.MISSION_SIGNING_SECRET
+        );
+      })()
+    : getMission(id);
   if (!mission) {
     return NextResponse.json({ error: "Mission not found." }, { status: 404 });
+  }
+  if (mission.view.id !== id) {
+    return NextResponse.json({ error: "Mission token does not match." }, { status: 400 });
   }
   if (mission.view.state === "EXECUTED") {
     return NextResponse.json(
@@ -77,7 +100,8 @@ export async function POST(
       "DYNAMIC_WALLET_PASSWORD"
     ]);
     const storedMetadata = await readStoredWalletMetadata(
-      env.DYNAMIC_WALLET_METADATA_PATH
+      env.DYNAMIC_WALLET_METADATA_PATH,
+      env.DYNAMIC_WALLET_METADATA_JSON
     );
     if (!storedMetadata || !isAddress(storedMetadata.accountAddress)) {
       throw new Error("Dynamic wallet metadata is missing.");
@@ -150,15 +174,19 @@ export async function POST(
       `[DYNAMIC] CONFIRMED | ${hashes.map(compact).join(", ")} | policy rechecked`
     );
 
-    const updated = updateMission(id, (current) => ({
-      ...current,
+    const updated = saveMission({
+      ...mission,
       view: {
-        ...current.view,
+        ...mission.view,
         state: "EXECUTED",
         execution: { transactionHashes: hashes }
       }
-    }));
-    return NextResponse.json({ mission: updated?.view });
+    });
+    requireEnv(env, ["MISSION_SIGNING_SECRET"]);
+    return NextResponse.json({
+      mission: updated.view,
+      missionToken: createMissionToken(updated, env.MISSION_SIGNING_SECRET)
+    });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Execution failed." },

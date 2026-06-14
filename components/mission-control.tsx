@@ -42,6 +42,7 @@ export function MissionControl() {
   const [objective, setObjective] = useState<string>(presets[0].objective);
   const [amountUsdc, setAmountUsdc] = useState<string>(presets[0].amount);
   const [mission, setMission] = useState<MissionView | null>(null);
+  const [missionToken, setMissionToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isCompiling, setIsCompiling] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
@@ -108,6 +109,7 @@ export function MissionControl() {
     event.preventDefault();
     setError(null);
     setMission(null);
+    setMissionToken(null);
     setChallengeResult(null);
     setIsCompiling(true);
 
@@ -119,12 +121,14 @@ export function MissionControl() {
       });
       const payload = (await response.json()) as {
         mission?: MissionView;
+        missionToken?: string;
         error?: string;
       };
-      if (!response.ok || !payload.mission) {
+      if (!response.ok || !payload.mission || !payload.missionToken) {
         throw new Error(payload.error ?? "Mission compilation failed.");
       }
       setMission(payload.mission);
+      setMissionToken(payload.missionToken);
     } catch (cause) {
       setError(
         cause instanceof Error ? cause.message : "Mission compilation failed."
@@ -158,7 +162,7 @@ export function MissionControl() {
   };
 
   const approve = async () => {
-    if (!mission || !ledgerAccount) return;
+    if (!mission || !missionToken || !ledgerAccount) return;
     setError(null);
     setIsApproving(true);
 
@@ -194,17 +198,20 @@ export function MissionControl() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           signature,
-          approver: ledgerAccount
+          approver: ledgerAccount,
+          missionToken
         })
       });
       const payload = (await response.json()) as {
         mission?: MissionView;
+        missionToken?: string;
         error?: string;
       };
-      if (!response.ok || !payload.mission) {
+      if (!response.ok || !payload.mission || !payload.missionToken) {
         throw new Error(payload.error ?? "Ledger approval failed.");
       }
       setMission(payload.mission);
+      setMissionToken(payload.missionToken);
     } catch (cause) {
       const message =
         cause instanceof Error ? cause.message : "Ledger approval failed.";
@@ -220,22 +227,26 @@ export function MissionControl() {
   };
 
   const execute = async () => {
-    if (!mission) return;
+    if (!mission || !missionToken) return;
     setError(null);
     setIsExecuting(true);
 
     try {
       const response = await fetch(`/api/missions/${mission.id}/execute`, {
-        method: "POST"
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ missionToken })
       });
       const payload = (await response.json()) as {
         mission?: MissionView;
+        missionToken?: string;
         error?: string;
       };
-      if (!response.ok || !payload.mission) {
+      if (!response.ok || !payload.mission || !payload.missionToken) {
         throw new Error(payload.error ?? "Dynamic execution failed.");
       }
       setMission(payload.mission);
+      setMissionToken(payload.missionToken);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Dynamic execution failed.");
     } finally {
@@ -244,7 +255,7 @@ export function MissionControl() {
   };
 
   const runChallenge = async (scenario: ChallengeScenario) => {
-    if (!mission) return;
+    if (!mission || !missionToken) return;
     setError(null);
     setIsChallenging(true);
 
@@ -252,7 +263,7 @@ export function MissionControl() {
       const response = await fetch(`/api/missions/${mission.id}/challenge`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ scenario })
+        body: JSON.stringify({ scenario, missionToken })
       });
       const payload = (await response.json()) as {
         scenario?: ChallengeScenario;

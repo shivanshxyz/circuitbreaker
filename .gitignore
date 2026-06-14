@@ -13,3 +13,4 @@ AGENT_HANDOFF.md
 
 # Dynamic wallet state is sensitive and must never be committed.
 .circuitbreaker-wallet/
+.vercel

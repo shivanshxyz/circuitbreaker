@@ -37,7 +37,8 @@ export const compileMission = async ({
   requireEnv(env, ["LIFI_API_KEY"]);
 
   const wallet = await readStoredWalletMetadata(
-    env.DYNAMIC_WALLET_METADATA_PATH
+    env.DYNAMIC_WALLET_METADATA_PATH,
+    env.DYNAMIC_WALLET_METADATA_JSON
   );
   if (!wallet || !isAddress(wallet.accountAddress)) {
     throw new Error("Dynamic wallet metadata is missing.");
